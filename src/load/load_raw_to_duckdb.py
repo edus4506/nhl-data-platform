@@ -9,7 +9,7 @@ WAREHOUSE_PATH = Path("warehouse") / "nhl.duckdb"
 
 def get_raw_schedule_path(team: str, season: str) -> Path:
     team = team.upper()
-    return Path("data") / "raw" / f"season{season}" / f"team{team}" / "schedule.json"
+    return Path("data") / "raw" / f"season={season}" / f"team={team}" / "schedule.json"
 
 
 def read_raw_schedule(path: Path) -> dict:
