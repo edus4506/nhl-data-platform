@@ -29,7 +29,7 @@ def parse_game(game: dict) -> dict:
 		"start_time_utc": game["startTimeUTC"],
 		"game_state": game["gameState"],
 		"game_schedule_state": game["gameScheduleState"],
-		"venue_name": game["venue"]["default"],
+		"venue_name": game.get("venue", {}).get("default"),
 		"neutral_site": game["neutralSite"],
 		"home_team_id": home_team["id"],
 		"home_team_abbrev": home_team["abbrev"],
@@ -37,7 +37,7 @@ def parse_game(game: dict) -> dict:
 		"away_team_id": away_team["id"],
 		"away_team_abbrev": away_team["abbrev"],
 		"away_score": away_team.get("score"),
-		"game_center_link": game["gameCenterLink"],
+		"game_center_link": game.get("gameCenterLink"),
 	}
 
 
