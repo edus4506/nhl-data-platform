@@ -34,8 +34,19 @@ def save_raw_schedule(data: dict, team: str, season: str) -> Path:
 
 def main() -> None:
 	parser = argparse.ArgumentParser(description="Extract NHL team schedule data.")
-	parser.add_argument("--season", required=True, help="Season in YYYYYYYY format, e.g. 20242025")
-	parser.add_argument("--team", default="SJS", help="Three-letter NHL team abreviation, e.g. SJS")
+
+	parser.add_argument(
+		"--team",
+		required=True,
+		help="Three-letter NHL team abbreviation, e.g. SJS",
+	)
+
+	parser.add_argument(
+		"--season",
+		required=True,
+		help="Season in YYYYYYYY format, e.g. 20242025",
+	)
+
 	args = parser.parse_args()
 	data = fetch_team_schedule(team=args.team, season=args.season)
 	output_path = save_raw_schedule(data=data, team=args.team, season=args.season)

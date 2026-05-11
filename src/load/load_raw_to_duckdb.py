@@ -1,3 +1,4 @@
+import argparse
 import json
 from pathlib import Path
 
@@ -120,3 +121,42 @@ def insert_raw_game(connection: duckdb.DuckDBPyConnection, game: dict) -> None:
 def insert_raw_games(connection: duckdb.DuckDBPyConnection, games: list[dict]) -> None:
 	for game in games:
 		insert_raw_game(connection, game)
+
+
+def main() -> None:
+	parser = argparse.ArgumentParser(description="Load raw NHL schedule data into DuckDB.")
+
+	parser.add_argument("--team", required=True)
+	parser.add_argument("--season", required=True)
+
+	args = parser.parse_args()
+
+	path = get_raw_schedule_path(args.team, args.season)
+	
+	if not path.exists():
+		raise FileNotFoundError(
+        f"Raw schedule file not found: {path}\n"
+        "Run the extract step first for this team and season."
+    )
+	
+	data = read_raw_schedule(path)
+
+	data = read_raw_schedule(path)
+
+	games = [parse_game(game) for game in data["games"]]
+
+	WAREHOUSE_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+	connection = duckdb.connect(str(WAREHOUSE_PATH))
+
+	create_raw_games_table(connection)
+
+	insert_raw_games(connection, games)
+
+	connection.close()
+
+	print(f"Inserted {len(games)} games into raw.games")
+
+
+if __name__ == "__main__":
+	main()
