@@ -8,3 +8,15 @@ select = ["E", "F", "I", "B"]
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "tab"
+
+[build-system]
+  requires = ["setuptools"]
+  build-backend = "setuptools.build_meta"
+
+  [project]
+  name = "nhl-data-platform"
+  version = "0.1.0"
+
+  [tool.setuptools.packages.find]
+  where = ["."]
+  include = ["src*"]
