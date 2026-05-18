@@ -39,8 +39,8 @@ load: check-team-season
 reports: check-season
 	python src/reports/generate_reports.py --season $(SEASON)
 
-pipeline: check-team-season
-	python src/pipeline/run_pipeline.py --team $(TEAM) --season $(SEASON)
+pipeline: check-season
+	python src/pipeline/run_pipeline.py --season $(SEASON)
 
 clean-db:
 	rm -f warehouse/nhl.duckdb

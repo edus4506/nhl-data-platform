@@ -11,17 +11,10 @@ from src.load.pipeline_runs import (
 	is_already_loaded,
 	register_pipeline_run,
 )
+from src.transform.transform_games import create_staging_schema, transform_regular_season, transform_playoffs
+from src.transform.build_team_stats import create_analytics_schema, build_team_stats
 
 WAREHOUSE_PATH = Path("warehouse") / "nhl.duckdb"
-
-
-def get_target_teams(team: str, season: str) -> list[str]:
-	team = team.upper()
-
-	if team == "ALL":
-		return fetch_teams_for_season(season)
-
-	return [team]
 
 
 def run_extract(team: str, season: str) -> None:
@@ -54,38 +47,50 @@ def run_load(team: str, season: str) -> None:
 
 def main() -> None:
 	parser = argparse.ArgumentParser(description="Run NHL data pipeline.")
-	parser.add_argument("--team", required=True)
 	parser.add_argument("--season", required=True)
 
 	args = parser.parse_args()
 
-	teams = get_target_teams(args.team, args.season)
-
-	requested_team = args.team.upper()
-
-	print(f"Season: {args.season}")
-
-	if requested_team == "ALL":
-		print(f"Teams to process: All {len(teams)} teams")
-	else:
-		print(f"Team to process: {teams[0]}")
-
 	connection = duckdb.connect(str(WAREHOUSE_PATH))
 	create_pipeline_runs_table(connection)
 
-	for team in teams:
-		if is_already_loaded(connection, team, args.season):
-			print(f"Skipping {team} {args.season} (already loaded)")
-			continue
+	if is_already_loaded(connection, args.season):
+		print(f"Season {args.season} already loaded — skipping extract and load")
+	else:
+		teams = fetch_teams_for_season(args.season)
+		print(f"Season: {args.season} — {len(teams)} teams")
 
-		print(f"Processing {team} {args.season}")
-		run_extract(team=team, season=args.season)
+		for team in teams:
+			print(f"  Extracting {team}...")
+			run_extract(team=team, season=args.season)
 
-		connection.close()
-		run_load(team=team, season=args.season)
-		connection = duckdb.connect(str(WAREHOUSE_PATH))
+			connection.close()
+			run_load(team=team, season=args.season)
+			connection = duckdb.connect(str(WAREHOUSE_PATH))
 
-		register_pipeline_run(connection, team, args.season)
+		register_pipeline_run(connection, args.season)
+
+	print("Running transforms...")
+	create_staging_schema(connection)
+	transform_regular_season(connection)
+	transform_playoffs(connection)
+	create_analytics_schema(connection)
+	build_team_stats(connection)
+
+	regular = connection.execute(
+		"SELECT COUNT(*) FROM staging.regular_season_games WHERE season = ?",
+								 [args.season]
+	).fetchone()[0]
+
+	playoffs = connection.execute(
+		"SELECT COUNT(*) FROM staging.playoff_games WHERE season = ?",
+		[args.season]
+	).fetchone()[0]
+
+	print(f"Inserted {regular} regular season games into analytics.team_stats")
+	print(f"Inserted {playoffs} playoff games into analytics.team_stats")
+
+	connection.close()
 
 	print("Pipeline finished successfully")
 
