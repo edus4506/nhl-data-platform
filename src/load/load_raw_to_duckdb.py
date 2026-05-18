@@ -132,12 +132,12 @@ def main() -> None:
 	args = parser.parse_args()
 
 	path = get_raw_schedule_path(args.team, args.season)
-	
+
 	if not path.exists():
 		raise FileNotFoundError(
-        f"Raw schedule file not found: {path}\n"
-        "Run the extract step first for this team and season."
-    )
+			f"Raw schedule file not found: {path}\n"
+			"Run the extract step first for this team and season."
+		)
 
 	data = read_raw_schedule(path)
 

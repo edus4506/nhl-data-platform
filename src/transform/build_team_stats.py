@@ -1,14 +1,16 @@
-import duckdb
 from pathlib import Path
+
+import duckdb
 
 WAREHOUSE_PATH = Path("warehouse") / "nhl.duckdb"
 
-def create_analytics_schema(connection):
-    connection.execute("CREATE SCHEMA IF NOT EXISTS analytics;")
+
+def create_analytics_schema(connection: duckdb.DuckDBPyConnection) -> None:
+	connection.execute("CREATE SCHEMA IF NOT EXISTS analytics;")
 
 
-def build_team_stats(connection):
-    connection.execute("""
+def build_team_stats(connection: duckdb.DuckDBPyConnection) -> None:
+	connection.execute("""
         CREATE OR REPLACE TABLE analytics.team_stats AS
         SELECT season, team, COUNT(*) AS games_played, 
             SUM(CASE WHEN team = winner THEN 1 ELSE 0 END) AS wins,
@@ -23,7 +25,7 @@ def build_team_stats(connection):
             UNION ALL
             
             SELECT season, away_team_abbrev AS team, away_score AS goals_for,
-                away_score AS goals_against, winner
+                home_score AS goals_against, winner
             FROM staging.regular_season_games
         )
         GROUP BY season, team
@@ -31,18 +33,17 @@ def build_team_stats(connection):
         """)
 
 
-
 def main():
-    connection = duckdb.connect(str(WAREHOUSE_PATH))
+	connection = duckdb.connect(str(WAREHOUSE_PATH))
 
-    create_analytics_schema(connection)
+	create_analytics_schema(connection)
 
-    build_team_stats(connection)
+	build_team_stats(connection)
 
-    connection.close()
+	connection.close()
 
-    print("Analytics tables created successfully")
+	print("Analytics tables created successfully")
 
 
 if __name__ == "__main__":
-    main()
+	main()

@@ -1,14 +1,16 @@
-import duckdb
 from pathlib import Path
+
+import duckdb
 
 WAREHOUSE_PATH = Path("warehouse") / "nhl.duckdb"
 
-def create_staging_schema(connection):
-    connection.execute("CREATE SCHEMA IF NOT EXISTS staging;")
+
+def create_staging_schema(connection: duckdb.DuckDBPyConnection) -> None:
+	connection.execute("CREATE SCHEMA IF NOT EXISTS staging;")
 
 
-def transform_regular_season(connection):
-    connection.execute("""
+def transform_regular_season(connection: duckdb.DuckDBPyConnection) -> None:
+	connection.execute("""
         CREATE OR REPLACE TABLE staging.regular_season_games AS
         SELECT game_id, season, game_date::DATE AS game_date, venue_name,
             home_team_abbrev, home_score, away_team_abbrev, away_score,
@@ -21,7 +23,7 @@ def transform_regular_season(connection):
     """)
 
 
-def transform_playoffs(connection):
+def transform_playoffs(connection: duckdb.DuckDBPyConnection) -> None:
 	connection.execute("""
         CREATE OR REPLACE TABLE staging.playoff_games AS
         SELECT game_id, season, game_date::DATE AS game_date, venue_name,
@@ -34,19 +36,20 @@ def transform_playoffs(connection):
         AND game_state = 'OFF';
     """)
 
+
 def main():
-    connection = duckdb.connect(str(WAREHOUSE_PATH))
-    
-    create_staging_schema(connection)
-    
-    transform_regular_season(connection)
+	connection = duckdb.connect(str(WAREHOUSE_PATH))
 
-    transform_playoffs(connection)
+	create_staging_schema(connection)
 
-    connection.close()
+	transform_regular_season(connection)
 
-    print("Staging tables created successfully")
+	transform_playoffs(connection)
+
+	connection.close()
+
+	print("Staging tables created successfully")
 
 
 if __name__ == "__main__":
-    main()
+	main()
