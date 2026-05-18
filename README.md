@@ -34,7 +34,7 @@ nhl-data-platform/
 │   │   ├── transform_games.py     # raw → staging (regular season + playoffs)
 │   │   └── build_team_stats.py    # staging → analytics (wins, losses, goals)
 │   └── pipeline/
-│       └── run_pipeline.py        # orchestrates extract + load for one or all teams
+│       └── run_pipeline.py        # orchestrates extract, load and transform for a full season
 ├── warehouse/
 │   └── nhl.duckdb             # local DuckDB database
 └── Makefile                   # common commands
@@ -55,30 +55,21 @@ nhl-data-platform/
 make install
 ```
 
-**Run the full pipeline for a single team:**
+**Run the full pipeline for a season:**
 ```bash
-make pipeline TEAM=BOS SEASON=20232024
+make pipeline SEASON=20232024
 ```
 
-**Run the full pipeline for all teams in a season:**
-```bash
-make pipeline TEAM=ALL SEASON=20232024
-```
-
-**Run transforms after loading data:**
-```bash
-python src/transform/transform_games.py
-python src/transform/build_team_stats.py
-```
+This fetches all teams for the season, extracts and loads schedule data, runs all transforms, and prints a summary of regular season and playoff games loaded. Already-loaded seasons are skipped automatically.
 
 ## Available Make Commands
 
 | Command | Description |
 |---------|-------------|
 | `make install` | Install dependencies |
-| `make pipeline TEAM=X SEASON=X` | Extract + load for one team or ALL |
-| `make extract TEAM=X SEASON=X` | Extract only |
-| `make load TEAM=X SEASON=X` | Load only |
+| `make pipeline SEASON=X` | Run full pipeline for a season (extract + load + transform) |
+| `make extract TEAM=X SEASON=X` | Extract only (single team) |
+| `make load TEAM=X SEASON=X` | Load only (single team) |
 | `make format` | Format code with ruff |
 | `make lint` | Lint code with ruff |
 | `make test` | Run tests |
