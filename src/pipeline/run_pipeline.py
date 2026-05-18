@@ -13,6 +13,7 @@ from src.load.pipeline_runs import (
 )
 from src.transform.transform_games import create_staging_schema, transform_regular_season, transform_playoffs
 from src.transform.build_team_stats import create_analytics_schema, build_team_stats
+from src.extract.extract_boxscores import extract_boxscores_for_season
 
 WAREHOUSE_PATH = Path("warehouse") / "nhl.duckdb"
 
@@ -61,7 +62,7 @@ def main() -> None:
 		print(f"Season: {args.season} — {len(teams)} teams")
 
 		for team in teams:
-			print(f"  Extracting {team}...")
+			print(f"  Extracting {team} {args.season}...")
 			run_extract(team=team, season=args.season)
 
 			connection.close()
@@ -69,6 +70,8 @@ def main() -> None:
 			connection = duckdb.connect(str(WAREHOUSE_PATH))
 
 		register_pipeline_run(connection, args.season)
+
+	extract_boxscores_for_season(args.season)
 
 	print("Running transforms...")
 	create_staging_schema(connection)

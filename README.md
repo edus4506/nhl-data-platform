@@ -10,9 +10,9 @@ This project follows a modern data pipeline architecture:
 NHL API → Extract → Raw (JSON) → Load → DuckDB (raw) → Transform → DuckDB (staging + analytics)
 ```
 
-**Current state:** schedule data for all NHL teams (dynamically fetched per season), with game results and team statistics per season.
+**Current state:** schedule and boxscore data for all NHL teams (dynamically fetched per season), with game results and team statistics per season.
 
-**Planned:** player stats, box scores, visualizations, and ML models.
+**Planned:** player stats, visualizations, and ML models.
 
 ## Project Structure
 
@@ -21,12 +21,15 @@ nhl-data-platform/
 ├── data/
 │   └── raw/                   # raw JSON files from the NHL API
 │       └── season=XXXX/
-│           └── team=XXX/
-│               └── schedule.json
+│           ├── team=XXX/
+│           │   └── schedule.json
+│           └── boxscores/
+│               └── {game_id}.json
 ├── src/
 │   ├── extract/
 │   │   ├── extract_schedule.py    # fetch schedule data from NHL API
-│   │   └── extract_teams.py       # fetch teams for a given season from NHL API
+│   │   ├── extract_teams.py       # fetch teams for a given season from NHL API
+│   │   └── extract_boxscores.py   # fetch boxscore data for each game (with skip)
 │   ├── load/
 │   │   ├── load_raw_to_duckdb.py  # load raw JSON into DuckDB
 │   │   └── pipeline_runs.py       # track which teams/seasons have been loaded
