@@ -5,15 +5,19 @@ from pathlib import Path
 
 import duckdb
 
+from src.extract.extract_boxscores import extract_boxscores_for_season
 from src.extract.extract_teams import fetch_teams_for_season
 from src.load.pipeline_runs import (
 	create_pipeline_runs_table,
 	is_already_loaded,
 	register_pipeline_run,
 )
-from src.transform.transform_games import create_staging_schema, transform_regular_season, transform_playoffs
-from src.transform.build_team_stats import create_analytics_schema, build_team_stats
-from src.extract.extract_boxscores import extract_boxscores_for_season
+from src.transform.build_team_stats import build_team_stats, create_analytics_schema
+from src.transform.transform_games import (
+	create_staging_schema,
+	transform_playoffs,
+	transform_regular_season,
+)
 
 WAREHOUSE_PATH = Path("warehouse") / "nhl.duckdb"
 
@@ -82,12 +86,11 @@ def main() -> None:
 
 	regular = connection.execute(
 		"SELECT COUNT(*) FROM staging.regular_season_games WHERE season = ?",
-								 [args.season]
+		[args.season],
 	).fetchone()[0]
 
 	playoffs = connection.execute(
-		"SELECT COUNT(*) FROM staging.playoff_games WHERE season = ?",
-		[args.season]
+		"SELECT COUNT(*) FROM staging.playoff_games WHERE season = ?", [args.season]
 	).fetchone()[0]
 
 	print(f"Inserted {regular} regular season games into analytics.team_stats")
