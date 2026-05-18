@@ -138,8 +138,6 @@ def main() -> None:
         f"Raw schedule file not found: {path}\n"
         "Run the extract step first for this team and season."
     )
-	
-	data = read_raw_schedule(path)
 
 	data = read_raw_schedule(path)
 
