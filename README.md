@@ -10,7 +10,7 @@ This project follows a modern data pipeline architecture:
 NHL API → Extract → Raw (JSON) → Load → DuckDB (raw) → Transform → DuckDB (staging + analytics)
 ```
 
-**Current state:** schedule data for all 32 NHL teams, with game results and team statistics per season.
+**Current state:** schedule data for all NHL teams (dynamically fetched per season), with game results and team statistics per season.
 
 **Planned:** player stats, box scores, visualizations, and ML models.
 
@@ -18,8 +18,6 @@ NHL API → Extract → Raw (JSON) → Load → DuckDB (raw) → Transform → D
 
 ```
 nhl-data-platform/
-├── config/
-│   └── nhl_teams.txt          # list of all 32 NHL team abbreviations
 ├── data/
 │   └── raw/                   # raw JSON files from the NHL API
 │       └── season=XXXX/
@@ -27,9 +25,11 @@ nhl-data-platform/
 │               └── schedule.json
 ├── src/
 │   ├── extract/
-│   │   └── extract_schedule.py    # fetch schedule data from NHL API
+│   │   ├── extract_schedule.py    # fetch schedule data from NHL API
+│   │   └── extract_teams.py       # fetch teams for a given season from NHL API
 │   ├── load/
-│   │   └── load_raw_to_duckdb.py  # load raw JSON into DuckDB
+│   │   ├── load_raw_to_duckdb.py  # load raw JSON into DuckDB
+│   │   └── pipeline_runs.py       # track which teams/seasons have been loaded
 │   ├── transform/
 │   │   ├── transform_games.py     # raw → staging (regular season + playoffs)
 │   │   └── build_team_stats.py    # staging → analytics (wins, losses, goals)
@@ -60,7 +60,7 @@ make install
 make pipeline TEAM=BOS SEASON=20232024
 ```
 
-**Run the full pipeline for all 32 teams:**
+**Run the full pipeline for all teams in a season:**
 ```bash
 make pipeline TEAM=ALL SEASON=20232024
 ```
