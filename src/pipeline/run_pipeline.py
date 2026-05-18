@@ -5,27 +5,21 @@ from pathlib import Path
 
 import duckdb
 
+from src.extract.extract_teams import fetch_teams_for_season
 from src.load.pipeline_runs import (
 	create_pipeline_runs_table,
 	is_already_loaded,
 	register_pipeline_run,
 )
 
-TEAMS_FILE = Path("config") / "nhl_teams.txt"
-
 WAREHOUSE_PATH = Path("warehouse") / "nhl.duckdb"
 
 
-def read_teams(path: Path) -> list[str]:
-	with path.open(encoding="utf-8") as file:
-		return [line.strip().upper() for line in file if line.strip()]
-
-
-def get_target_teams(team: str) -> list[str]:
+def get_target_teams(team: str, season: str) -> list[str]:
 	team = team.upper()
 
 	if team == "ALL":
-		return read_teams(TEAMS_FILE)
+		return fetch_teams_for_season(season)
 
 	return [team]
 
@@ -65,7 +59,7 @@ def main() -> None:
 
 	args = parser.parse_args()
 
-	teams = get_target_teams(args.team)
+	teams = get_target_teams(args.team, args.season)
 
 	requested_team = args.team.upper()
 
