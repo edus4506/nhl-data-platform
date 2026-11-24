@@ -7,11 +7,13 @@ import duckdb
 
 from src.extract.extract_boxscores import extract_boxscores_for_season
 from src.extract.extract_teams import fetch_teams_for_season
+from src.load.load_boxscores_to_duckdb import load_boxscores_for_season
 from src.load.pipeline_runs import (
 	create_pipeline_runs_table,
 	is_already_loaded,
 	register_pipeline_run,
 )
+from src.transform.build_game_logs import build_game_logs
 from src.transform.build_team_stats import build_team_stats, create_analytics_schema
 from src.transform.transform_games import (
 	create_staging_schema,
@@ -73,16 +75,27 @@ def main() -> None:
 			run_load(team=team, season=args.season)
 			connection = duckdb.connect(str(WAREHOUSE_PATH))
 
+		loaded_games = connection.execute(
+			"SELECT COUNT(*) FROM raw.games WHERE season = ?", [args.season]
+		).fetchone()[0]
+		if loaded_games == 0:
+			raise RuntimeError(f"No games loaded for season {args.season}; not marking as loaded")
+
 		register_pipeline_run(connection, args.season)
 
-	extract_boxscores_for_season(args.season)
-
-	print("Running transforms...")
+	print("Running staging transforms...")
 	create_staging_schema(connection)
 	transform_regular_season(connection)
 	transform_playoffs(connection)
 	create_analytics_schema(connection)
 	build_team_stats(connection)
+
+	connection.close()
+	extract_boxscores_for_season(args.season)
+	connection = duckdb.connect(str(WAREHOUSE_PATH))
+
+	load_boxscores_for_season(connection, args.season)
+	build_game_logs(connection)
 
 	regular = connection.execute(
 		"SELECT COUNT(*) FROM staging.regular_season_games WHERE season = ?",
@@ -93,8 +106,8 @@ def main() -> None:
 		"SELECT COUNT(*) FROM staging.playoff_games WHERE season = ?", [args.season]
 	).fetchone()[0]
 
-	print(f"Inserted {regular} regular season games into analytics.team_stats")
-	print(f"Inserted {playoffs} playoff games into analytics.team_stats")
+	print(f"Season {args.season}: {regular} regular season games in staging")
+	print(f"Season {args.season}: {playoffs} playoff games in staging")
 
 	connection.close()
 
